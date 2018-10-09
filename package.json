@@ -1,9 +1,9 @@
 {
-    "name": "react-with-context",
+    "name": "react-context-service",
     "version": "1.0.0",
     "description": "Inject react context into component via props in a fun way",
     "main": "dist/index.js",
-    "repository": "github:kenkz447/react-with-context",
+    "repository": "github:kenkz447/react-context-service",
     "scripts": {
         "build:before": "rimraf ./dist",
         "build": "npm run build:before && tsc",
