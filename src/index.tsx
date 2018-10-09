@@ -3,15 +3,14 @@ import * as React from 'react';
 type ContextProviderProps<P = {}> = { value: P; };
 type ReactContructor<P = {}> = new (props: P) => React.Component<P>;
 
-type ProviderState = Required<ContextProps>;
-type SubscribeCallback<T = {}> = (context: T) => void;
+type ProviderState = Required<WithContextProps>;
 
-type SetContext = <T>(context: T) => void;
+type SetContext<T> = (context: T) => void;
 type GetContext = <P>(...key: Array<keyof P>) => Pick<P, keyof P>;
 
-export interface ContextProps {
-    setContext?: SetContext;
-    getContext?: GetContext;
+export interface WithContextProps<T = {}> {
+    setContext: SetContext<Partial<T>>;
+    getContext: GetContext;
 }
 
 export class ContextCreator extends React.Component<ContextProviderProps> {
@@ -45,8 +44,6 @@ interface ProviderProps {
 }
 
 export class Provider extends React.Component<ProviderProps, ProviderState> {
-    static subscribeStack: Array<SubscribeCallback<any>> = [];
-
     constructor(props: any) {
         super(props);
 
@@ -57,8 +54,12 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
             setContext: (context: any) => {
                 this.setState(context);
             },
-            getContext: (...getContextKey) => {
-                return getContextKey.reduce(
+            getContext: (...getContextKeys) => {
+                if (!getContextKeys) {
+                    return Object.seal(this.state);
+                }
+
+                return getContextKeys.reduce(
                     (gettedContext, currentKey) => {
                         gettedContext[currentKey] = (this.state as any)[currentKey];
                         return gettedContext;
@@ -80,11 +81,12 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
     }
 }
 
-export function withContext<P extends ContextProps>(...keys: Array<keyof P>) {
+export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
     return (Component: ReactContructor<P>) => {
-        const getContextToProps = (context: P) => {
-            const contextToProps: Partial<P> = {};
-            
+
+        const getContextToProps = (context: C & WithContextProps) => {
+            const contextToProps: Partial<C & WithContextProps> = {};
+
             if (keys) {
                 // Add context request by keys
                 for (const contextKey of keys) {
