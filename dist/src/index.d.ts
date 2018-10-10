@@ -4,11 +4,11 @@ declare type ContextProviderProps<P = {}> = {
 };
 declare type ReactContructor<P = {}> = new (props: P) => React.Component<P>;
 declare type ProviderState = Required<WithContextProps>;
-declare type SetContext<T> = (context: T) => void;
-declare type GetContext = <P>(...key: Array<keyof P>) => Pick<P, keyof P>;
+declare type SetContext<T> = (context: Partial<T>) => void;
+declare type GetContext<P> = (...key: Array<keyof P>) => Pick<P, keyof P>;
 export interface WithContextProps<T = {}> {
-    setContext: SetContext<Partial<T>>;
-    getContext: GetContext;
+    setContext: SetContext<T>;
+    getContext: GetContext<T>;
 }
 export declare class ContextCreator extends React.Component<ContextProviderProps> {
     static instance: ContextCreator;

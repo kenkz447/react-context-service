@@ -5,12 +5,12 @@ type ReactContructor<P = {}> = new (props: P) => React.Component<P>;
 
 type ProviderState = Required<WithContextProps>;
 
-type SetContext<T> = (context: T) => void;
-type GetContext = <P>(...key: Array<keyof P>) => Pick<P, keyof P>;
+type SetContext<T> = (context: Partial<T>) => void;
+type GetContext<P> = (...key: Array<keyof P>) => Pick<P, keyof P>;
 
 export interface WithContextProps<T = {}> {
-    setContext: SetContext<Partial<T>>;
-    getContext: GetContext;
+    setContext: SetContext<T>;
+    getContext: GetContext<T>;
 }
 
 export class ContextCreator extends React.Component<ContextProviderProps> {
