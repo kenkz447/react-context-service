@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TestRenderer from 'react-test-renderer';
 
-import { ContextCreator, withContext, ContextProps, Provider } from './index';
+import { ContextCreator, withContext, WithContextProps, Provider } from './index';
 
 interface AppContext {
     foo?: number;
@@ -17,7 +17,7 @@ describe('TEST', () => {
     // #Foo Component
     const renderFoo = jest.fn(() => null);
 
-    interface FooComponentProps extends ContextProps, Pick<AppContext, 'foo'> {
+    interface FooComponentProps extends WithContextProps<AppContext>, Pick<AppContext, 'foo'> {
         fooPrimayProps?: string;
     }
 
@@ -27,10 +27,10 @@ describe('TEST', () => {
         }
     }
 
-    const Foo = withContext<FooComponentProps>('foo')(FooComponent);
+    const Foo = withContext<FooComponentProps, Pick<FooComponentProps, 'fooPrimayProps'>>('foo')(FooComponent);
 
     // #Bar Component
-    interface BarComponentProps extends ContextProps, Pick<AppContext, 'bar'> {
+    interface BarComponentProps extends WithContextProps<AppContext>, Pick<AppContext, 'bar'> {
         barPrimayProps?: string;
     }
     const renderBar = jest.fn(() => null);
@@ -53,8 +53,8 @@ describe('TEST', () => {
 
     const providerElement = ProviderTestInstance.instance as Provider;
     const providerDefaultProps = {
-        setContext: providerElement.state.setContext,
-        getContext: providerElement.state.getContext
+        setContext: providerElement.state.setContext as WithContextProps<AppContext>['setContext'],
+        getContext: providerElement.state.getContext as WithContextProps<AppContext>['getContext']
     };
 
     describe('initial render', () => {
@@ -79,7 +79,7 @@ describe('TEST', () => {
         });
 
         it('should get all initial context', () => {
-            const initialContext = providerDefaultProps.getContext<AppContext>('bar', 'foo');
+            const initialContext = providerDefaultProps.getContext('bar', 'foo');
             expect(initialContext).toEqual(appContext);
         });
     });
@@ -105,7 +105,7 @@ describe('TEST', () => {
         });
 
         it('should get all changed context', () => {
-            const initialContext = providerDefaultProps.getContext<AppContext>( 'foo');
+            const initialContext = providerDefaultProps.getContext('foo');
             expect(initialContext).toEqual({
                 foo: 2
             });

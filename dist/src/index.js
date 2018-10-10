@@ -63,9 +63,8 @@ function withContext(...keys) {
             }
         }
         return class Injector extends React.PureComponent {
-            constructor(props) {
-                super(props);
-                this.consumberRef = React.createRef();
+            constructor() {
+                super(...arguments);
                 this.renderConsumer = (context) => {
                     const contextToProps = getContextToProps(context);
                     const componentPropsWithContext = Object.assign(contextToProps, this.props);

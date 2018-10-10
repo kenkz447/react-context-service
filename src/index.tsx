@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 type ContextProviderProps<P = {}> = { value: P; };
-type ReactContructor<P = {}> = new (props: P) => React.Component<P>;
+type ReactContructor<P = {}> = (new (props: P) => React.Component<P>) | React.ComponentType<P>;
 
 type ProviderState = Required<WithContextProps>;
 
@@ -110,12 +110,6 @@ export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
         }
 
         return class Injector extends React.PureComponent<P> {
-            consumberRef = React.createRef<React.Component<P>>();
-
-            constructor(props: P) {
-                super(props);
-            }
-
             render() {
                 const { Context } = ContextCreator.instance;
 
