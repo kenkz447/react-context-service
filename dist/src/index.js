@@ -26,8 +26,11 @@ class Provider extends React.Component {
         const { value } = props;
         this.state = Object.assign({}, value, { setContext: (context) => {
                 this.setState(context);
-            }, getContext: (...getContextKey) => {
-                return getContextKey.reduce((gettedContext, currentKey) => {
+            }, getContext: (...getContextKeys) => {
+                if (!getContextKeys) {
+                    return Object.seal(this.state);
+                }
+                return getContextKeys.reduce((gettedContext, currentKey) => {
                     gettedContext[currentKey] = this.state[currentKey];
                     return gettedContext;
                 }, {});
@@ -38,7 +41,6 @@ class Provider extends React.Component {
         return (React.createElement(Context.Provider, { value: this.state }, this.props.children));
     }
 }
-Provider.subscribeStack = [];
 exports.Provider = Provider;
 function withContext(...keys) {
     return (Component) => {
