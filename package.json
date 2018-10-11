@@ -1,6 +1,6 @@
 {
     "name": "react-context-service",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "Inject react context into component via props in a fun way",
     "main": "dist/index.js",
     "repository": "github:kenkz447/react-context-service",

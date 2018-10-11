@@ -91,4 +91,66 @@ export class Foo extends React.Component {
 }
 ```
 
+## With typescript
+
+In case your project based on typescript, you will encounter some problems because the data type definitions.
+The code below will help you avoid trouble.
+
+```tsx
+import { WithContextProps } from 'react-context-service';
+
+/**
+ * Entire app's context object,
+ * everything can be store here
+ */
+export interface AppContext {
+    foo: number;
+    bar: number;
+}
+
+/**
+ * Suggest two keys 'foo' and 'bar' key when
+ * your typing `setContext(...keys)` or `getContext(...keys)`.
+ */
+export type WithAppContextProps = WithContextProps<AppContext>;
+```
+
+At Child component:
+
+```tsx
+/**
+ * Props coming from parent component
+ */
+interface ChildComponentOwnProps {
+    name: string;
+}
+
+/**
+ * Completed suggestions with:
+ * name, bar, setContext and getContext.
+ */
+type ChildComponentProps = WithAppContextProps &
+    Pick<AppContext, 'bar'> &
+    ChildComponentOwnProps;
+
+function ChildComponent(props: ChildComponentProps) {
+    const { bar, getContext, setContext } = props;
+    return <span>{bar}</span>;
+}
+
+/**
+ * AppContext is help you see context key list when typing;
+ * ChildComponentOwnProps is accepted props passed from parents
+ */
+export default withContext<AppContext, ChildComponentOwnProps>('bar')(ChildComponent)
+```
+
+and Parent:
+
+```tsx
+import ChildComponent from './ChildComponent'
+
+<ChildComponent name="any"/>
+```
+
 That all =))
