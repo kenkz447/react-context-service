@@ -2,7 +2,6 @@ import * as React from 'react';
 declare type ContextProviderProps<P = {}> = {
     value: P;
 };
-declare type ReactContructor<P = {}> = (new (props: P) => React.Component<P>) | React.ComponentType<P>;
 declare type ProviderState = Required<WithContextProps>;
 declare type SetContext<T> = (context: Partial<T>) => void;
 declare type GetContext<P> = (...key: Array<keyof P>) => Pick<P, keyof P>;
@@ -21,10 +20,13 @@ interface ProviderProps {
     value: any;
 }
 export declare class Provider extends React.Component<ProviderProps, ProviderState> {
+    setContextProxy: (source: any, newContext: any) => void;
+    getContext: (...getContextKeys: any[]) => any;
+    log: (source: any, newContext: any, oldContext: any) => void;
     constructor(props: any);
     render(): JSX.Element;
 }
-export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): (Component: ReactContructor<P>) => {
+export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): (Component: React.ComponentType<P & WithContextProps<{}>>) => {
     new (props: Readonly<P>): {
         render(): JSX.Element;
         renderConsumer: (context: any) => JSX.Element;

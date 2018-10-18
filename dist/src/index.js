@@ -20,21 +20,41 @@ class ContextCreator extends React.Component {
     }
 }
 exports.ContextCreator = ContextCreator;
+const isLogging = process.env.NODE_ENV !== 'production';
 class Provider extends React.Component {
     constructor(props) {
         super(props);
-        const { value } = props;
-        this.state = Object.assign({}, value, { setContext: (context) => {
-                this.setState(context);
-            }, getContext: (...getContextKeys) => {
-                if (!getContextKeys) {
-                    return Object.seal(this.state);
+        this.setContextProxy = (source, newContext) => {
+            const newContextKey = Object.keys(newContext);
+            const oldContext = this.getContext(newContextKey);
+            const setContextCallback = (() => {
+                if (isLogging) {
+                    this.log(source, newContext, oldContext);
                 }
-                return getContextKeys.reduce((gettedContext, currentKey) => {
-                    gettedContext[currentKey] = this.state[currentKey];
-                    return gettedContext;
-                }, {});
-            } });
+            });
+            this.setState(newContext, setContextCallback);
+        };
+        this.getContext = (...getContextKeys) => {
+            if (!getContextKeys) {
+                return Object.seal(this.state);
+            }
+            return getContextKeys.reduce((gettedContext, currentKey) => {
+                gettedContext[currentKey] = this.state[currentKey];
+                return gettedContext;
+            }, {});
+        };
+        this.log = (source, newContext, oldContext) => {
+            console.group('Context was changed');
+            console.log('By: ', source);
+            console.log('From:', oldContext);
+            console.log('To:', newContext);
+            console.groupEnd();
+        };
+        const { value } = props;
+        const { setContextProxy, getContext } = this;
+        this.state = Object.assign({}, value, { setContext(context) {
+                setContextProxy(this, context);
+            }, getContext: getContext });
     }
     render() {
         const { Context } = ContextCreator.instance;
@@ -42,6 +62,29 @@ class Provider extends React.Component {
     }
 }
 exports.Provider = Provider;
+class InjectedWrapper extends React.PureComponent {
+    constructor() {
+        super(...arguments);
+        /**
+         * Exclude Component from Wrapper's props.
+         */
+        this.getComponentProps = () => {
+            const props = {};
+            for (const key in this.props) {
+                if (!this.props.hasOwnProperty(key) || key === 'Component') {
+                    continue;
+                }
+                const element = this.props[key];
+                props[key] = element;
+            }
+            return props;
+        };
+    }
+    render() {
+        const { Component } = this.props;
+        return (React.createElement(Component, Object.assign({}, this.getComponentProps())));
+    }
+}
 function withContext(...keys) {
     return (Component) => {
         const getContextToProps = (context) => {
@@ -57,18 +100,13 @@ function withContext(...keys) {
             contextToProps.getContext = context.getContext;
             return contextToProps;
         };
-        class InjectedWrapper extends React.PureComponent {
-            render() {
-                return (React.createElement(Component, Object.assign({}, this.props)));
-            }
-        }
         return class Injector extends React.PureComponent {
             constructor() {
                 super(...arguments);
                 this.renderConsumer = (context) => {
                     const contextToProps = getContextToProps(context);
                     const componentPropsWithContext = Object.assign(contextToProps, this.props);
-                    return React.createElement(InjectedWrapper, Object.assign({}, componentPropsWithContext));
+                    return React.createElement(InjectedWrapper, Object.assign({ Component: Component }, componentPropsWithContext));
                 };
             }
             render() {

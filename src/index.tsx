@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 type ContextProviderProps<P = {}> = { value: P; };
-type ReactContructor<P = {}> = (new (props: P) => React.Component<P>) | React.ComponentType<P>;
 
 type ProviderState = Required<WithContextProps>;
 
@@ -43,30 +42,56 @@ interface ProviderProps {
     value: any;
 }
 
+const isLogging = process.env.NODE_ENV !== 'production';
+
 export class Provider extends React.Component<ProviderProps, ProviderState> {
+    setContextProxy = (source, newContext) => {
+        const newContextKey = Object.keys(newContext);
+        const oldContext = this.getContext(newContextKey);
+
+        const setContextCallback = (() => {
+            if (isLogging) {
+                this.log(source, newContext, oldContext);
+            }
+        });
+
+        this.setState(newContext, setContextCallback);
+    }
+
+    getContext = (...getContextKeys) => {
+        if (!getContextKeys) {
+            return Object.seal(this.state);
+        }
+
+        return getContextKeys.reduce(
+            (gettedContext, currentKey) => {
+                gettedContext[currentKey] = (this.state as any)[currentKey];
+                return gettedContext;
+            },
+            {} as any
+        );
+    }
+
+    log = (source, newContext, oldContext) => {
+        console.group('Context was changed');
+        console.log('By: ', source);
+        console.log('From:', oldContext);
+        console.log('To:', newContext);
+        console.groupEnd();
+    }
+
     constructor(props: any) {
         super(props);
 
         const { value } = props;
+        const { setContextProxy, getContext } = this;
 
         this.state = {
             ...value,
-            setContext: (context: any) => {
-                this.setState(context);
+            setContext (context: any) {
+                setContextProxy(this, context);
             },
-            getContext: (...getContextKeys) => {
-                if (!getContextKeys) {
-                    return Object.seal(this.state);
-                }
-
-                return getContextKeys.reduce(
-                    (gettedContext, currentKey) => {
-                        gettedContext[currentKey] = (this.state as any)[currentKey];
-                        return gettedContext;
-                    },
-                    {} as any
-                );
-            }
+            getContext: getContext
         };
     }
 
@@ -81,8 +106,38 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
     }
 }
 
+type InjectedWrapperComponentProps<P> = P & WithContextProps;
+type InjectedWrapperProps<P> = { Component: React.ComponentType<InjectedWrapperComponentProps<P>> };
+
+class InjectedWrapper<P> extends React.PureComponent<InjectedWrapperProps<P> & WithContextProps> {
+    render() {
+        const { Component } = this.props;
+
+        return (
+            <Component {...this.getComponentProps()} />
+        );
+    }
+
+    /**
+     * Exclude Component from Wrapper's props.
+     */
+    getComponentProps = () => {
+        const props = {} as InjectedWrapperComponentProps<P>;
+        for (const key in this.props) {
+            if (!this.props.hasOwnProperty(key) || key === 'Component') {
+                continue;
+            }
+
+            const element = this.props[key];
+            props[key] = element;
+        }
+
+        return props;
+    }
+}
+
 export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
-    return (Component: ReactContructor<P>) => {
+    return (Component: React.ComponentType<P & WithContextProps>) => {
 
         const getContextToProps = (context: C & WithContextProps) => {
             const contextToProps: Partial<C & WithContextProps> = {};
@@ -101,14 +156,6 @@ export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
             return contextToProps;
         };
 
-        class InjectedWrapper extends React.PureComponent<P> {
-            render() {
-                return (
-                    <Component {...this.props} />
-                );
-            }
-        }
-
         return class Injector extends React.PureComponent<P> {
             render() {
                 const { Context } = ContextCreator.instance;
@@ -126,9 +173,9 @@ export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
                 const componentPropsWithContext = Object.assign(
                     contextToProps,
                     this.props
-                );
+                ) as P & WithContextProps;
 
-                return <InjectedWrapper {...componentPropsWithContext} />;
+                return <InjectedWrapper Component={Component} {...componentPropsWithContext} />;
             }
         };
     };
