@@ -1,16 +1,19 @@
 import * as React from 'react';
 
-type ContextProviderProps<P = {}> = { value: P; };
+type ContextProviderProps<P = {}> = {
+    value: P;
+    loggingEnabled?: boolean;
+};
 
 type ProviderState = Required<WithContextProps>;
 
 type SetContext<T> = (context: Partial<T>) => void;
 type GetContext<P> = (...key: Array<keyof P>) => Pick<P, keyof P>;
 
-export interface WithContextProps<T = {}> {
+export type WithContextProps<T = {}, OwnProps = {}> = T & OwnProps & {
     setContext: SetContext<T>;
     getContext: GetContext<T>;
-}
+};
 
 export class ContextCreator extends React.Component<ContextProviderProps> {
     static instance: ContextCreator;
@@ -26,11 +29,12 @@ export class ContextCreator extends React.Component<ContextProviderProps> {
     }
 
     render() {
-        const { value, children } = this.props;
+        const { value, loggingEnabled, children } = this.props;
         return (
             <Provider
                 ref={(e: Provider) => this.provider = e}
                 value={value}
+                loggingEnabled={loggingEnabled}
             >
                 {children}
             </Provider>
@@ -39,18 +43,18 @@ export class ContextCreator extends React.Component<ContextProviderProps> {
 }
 
 interface ProviderProps {
+    loggingEnabled?: boolean;
     value: any;
 }
 
-const isLogging = process.env.NODE_ENV !== 'production';
-
 export class Provider extends React.Component<ProviderProps, ProviderState> {
     setContextProxy = (source, newContext) => {
+        const { loggingEnabled } = this.props;
         const newContextKey = Object.keys(newContext);
         const oldContext = this.getContext(newContextKey);
 
         const setContextCallback = (() => {
-            if (isLogging) {
+            if (loggingEnabled) {
                 this.log(source, newContext, oldContext);
             }
         });
@@ -88,7 +92,7 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
 
         this.state = {
             ...value,
-            setContext (context: any) {
+            setContext(context: any) {
                 setContextProxy(this, context);
             },
             getContext: getContext
@@ -137,8 +141,7 @@ class InjectedWrapper<P> extends React.PureComponent<InjectedWrapperProps<P> & W
 }
 
 export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
-    return (Component: React.ComponentType<P & WithContextProps>) => {
-
+    return function <CP extends React.ComponentType<P & WithContextProps>>(Component: CP) {
         const getContextToProps = (context: C & WithContextProps) => {
             const contextToProps: Partial<C & WithContextProps> = {};
 

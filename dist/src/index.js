@@ -15,20 +15,20 @@ class ContextCreator extends React.Component {
         ContextCreator.instance = this;
     }
     render() {
-        const { value, children } = this.props;
-        return (React.createElement(Provider, { ref: (e) => this.provider = e, value: value }, children));
+        const { value, loggingEnabled, children } = this.props;
+        return (React.createElement(Provider, { ref: (e) => this.provider = e, value: value, loggingEnabled: loggingEnabled }, children));
     }
 }
 exports.ContextCreator = ContextCreator;
-const isLogging = process.env.NODE_ENV !== 'production';
 class Provider extends React.Component {
     constructor(props) {
         super(props);
         this.setContextProxy = (source, newContext) => {
+            const { loggingEnabled } = this.props;
             const newContextKey = Object.keys(newContext);
             const oldContext = this.getContext(newContextKey);
             const setContextCallback = (() => {
-                if (isLogging) {
+                if (loggingEnabled) {
                     this.log(source, newContext, oldContext);
                 }
             });
@@ -86,7 +86,7 @@ class InjectedWrapper extends React.PureComponent {
     }
 }
 function withContext(...keys) {
-    return (Component) => {
+    return function (Component) {
         const getContextToProps = (context) => {
             const contextToProps = {};
             if (keys) {

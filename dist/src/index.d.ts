@@ -1,14 +1,15 @@
 import * as React from 'react';
 declare type ContextProviderProps<P = {}> = {
     value: P;
+    loggingEnabled?: boolean;
 };
 declare type ProviderState = Required<WithContextProps>;
 declare type SetContext<T> = (context: Partial<T>) => void;
 declare type GetContext<P> = (...key: Array<keyof P>) => Pick<P, keyof P>;
-export interface WithContextProps<T = {}> {
+export declare type WithContextProps<T = {}, OwnProps = {}> = T & OwnProps & {
     setContext: SetContext<T>;
     getContext: GetContext<T>;
-}
+};
 export declare class ContextCreator extends React.Component<ContextProviderProps> {
     static instance: ContextCreator;
     Context: React.Context<ContextProviderProps['value']>;
@@ -17,6 +18,7 @@ export declare class ContextCreator extends React.Component<ContextProviderProps
     render(): JSX.Element;
 }
 interface ProviderProps {
+    loggingEnabled?: boolean;
     value: any;
 }
 export declare class Provider extends React.Component<ProviderProps, ProviderState> {
@@ -26,7 +28,10 @@ export declare class Provider extends React.Component<ProviderProps, ProviderSta
     constructor(props: any);
     render(): JSX.Element;
 }
-export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): (Component: React.ComponentType<P & WithContextProps<{}>>) => {
+export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): <CP extends React.ComponentType<P & {
+    setContext: SetContext<{}>;
+    getContext: GetContext<{}>;
+}>>(Component: CP) => {
     new (props: Readonly<P>): {
         render(): JSX.Element;
         renderConsumer: (context: any) => JSX.Element;
