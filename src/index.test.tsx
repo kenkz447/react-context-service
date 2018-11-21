@@ -9,40 +9,46 @@ interface AppContext {
 }
 
 describe('TEST', () => {
-    const appContext: AppContext = {
+    const appContextValue: AppContext = {
         foo: 1,
         bar: 2
     };
 
+    const appContext = React.createContext(appContextValue);
+
     // #Foo Component
     const renderFoo = jest.fn(() => null);
 
-    interface FooComponentProps extends WithContextProps<AppContext>, Pick<AppContext, 'foo'> {
+    interface FooComponentProps {
         fooPrimayProps?: string;
     }
 
-    class FooComponent extends React.Component<FooComponentProps> {
+    class FooComponent extends React.Component<WithContextProps<AppContext, FooComponentProps>> {
         render() {
             return renderFoo(this.props);
         }
     }
 
-    const Foo = withContext<FooComponentProps, Pick<FooComponentProps, 'fooPrimayProps'>>('foo')(FooComponent);
+    const Foo = withContext<AppContext, FooComponentProps>('foo')(FooComponent);
 
     // #Bar Component
-    interface BarComponentProps extends WithContextProps<AppContext>, Pick<AppContext, 'bar'> {
+    interface BarComponentProps {
         barPrimayProps?: string;
     }
+
     const renderBar = jest.fn(() => null);
-    class BarComponent extends React.Component<BarComponentProps> {
+    class BarComponent extends React.Component<WithContextProps<AppContext, BarComponentProps>> {
         render() {
             return renderBar(this.props);
         }
     }
-    const Bar = withContext<BarComponentProps>('bar')(BarComponent);
+    const Bar = withContext<AppContext, BarComponentProps>('bar')(BarComponent);
 
     const AppRenderer = TestRenderer.create(
-        <ContextCreator value={appContext}>
+        <ContextCreator
+            context={appContext}
+            initContextValue={appContextValue}
+        >
             <Foo />
             <Bar />
         </ContextCreator>
@@ -65,14 +71,14 @@ describe('TEST', () => {
 
         it('should Foo and Bar rendered with initial context', () => {
             const initialFooProps: AppContext = {
-                foo: appContext.foo,
+                foo: appContextValue.foo,
                 ...providerDefaultProps
             };
 
             expect(renderFoo).toBeCalledWith(initialFooProps);
 
             const initialBarProps: AppContext = {
-                bar: appContext.bar,
+                bar: appContextValue.bar,
                 ...providerDefaultProps
             };
             expect(renderBar).toBeCalledWith(initialBarProps);
@@ -80,7 +86,7 @@ describe('TEST', () => {
 
         it('should get all initial context', () => {
             const initialContext = providerDefaultProps.getContext('bar', 'foo');
-            expect(initialContext).toEqual(appContext);
+            expect(initialContext).toEqual(appContextValue);
         });
     });
 
@@ -115,13 +121,16 @@ describe('TEST', () => {
             jest.clearAllMocks();
 
             AppRenderer.update(
-                <ContextCreator value={appContext}>
+                <ContextCreator
+                    context={appContext}
+                    initContextValue={appContextValue}
+                >
                     <Foo fooPrimayProps="new-passed-props" />
                     <Bar />
                 </ContextCreator>
             );
 
-            const changedTextComponentProps: FooComponentProps = {
+            const changedTextComponentProps: FooComponentProps & AppContext = {
                 fooPrimayProps: 'new-passed-props',
                 foo: 2,
                 ...providerDefaultProps

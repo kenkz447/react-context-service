@@ -1,4 +1,13 @@
 "use strict";
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) if (e.indexOf(p[i]) < 0)
+            t[p[i]] = s[p[i]];
+    return t;
+};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -11,12 +20,13 @@ const React = __importStar(require("react"));
 class ContextCreator extends React.Component {
     constructor(props) {
         super(props);
-        this.Context = React.createContext({});
+        const { context, initContextValue } = this.props;
+        this.Context = context || React.createContext(initContextValue);
         ContextCreator.instance = this;
     }
     render() {
-        const { value, loggingEnabled, children } = this.props;
-        return (React.createElement(Provider, { ref: (e) => this.provider = e, value: value, loggingEnabled: loggingEnabled }, children));
+        const { loggingEnabled, children, initContextValue } = this.props;
+        return (React.createElement(Provider, { ref: (e) => this.provider = e, initContextValue: initContextValue, loggingEnabled: loggingEnabled }, children));
     }
 }
 exports.ContextCreator = ContextCreator;
@@ -50,9 +60,9 @@ class Provider extends React.Component {
             console.log('To:', newContext);
             console.groupEnd();
         };
-        const { value } = props;
+        const { initContextValue } = props;
         const { setContextProxy, getContext } = this;
-        this.state = Object.assign({}, value, { setContext(context) {
+        this.state = Object.assign({}, initContextValue, { setContext(context) {
                 setContextProxy(this, context);
             }, getContext: getContext });
     }
@@ -63,26 +73,9 @@ class Provider extends React.Component {
 }
 exports.Provider = Provider;
 class InjectedWrapper extends React.PureComponent {
-    constructor() {
-        super(...arguments);
-        /**
-         * Exclude Component from Wrapper's props.
-         */
-        this.getComponentProps = () => {
-            const props = {};
-            for (const key in this.props) {
-                if (!this.props.hasOwnProperty(key) || key === 'Component') {
-                    continue;
-                }
-                const element = this.props[key];
-                props[key] = element;
-            }
-            return props;
-        };
-    }
     render() {
-        const { Component } = this.props;
-        return (React.createElement(Component, Object.assign({}, this.getComponentProps())));
+        const _a = this.props, { Component } = _a, props = __rest(_a, ["Component"]);
+        return (React.createElement(Component, Object.assign({}, props)));
     }
 }
 function withContext(...keys) {

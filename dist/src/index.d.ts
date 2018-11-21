@@ -1,6 +1,7 @@
 import * as React from 'react';
-declare type ContextProviderProps<P = {}> = {
-    value: P;
+declare type ContextProviderProps<T = {}> = {
+    initContextValue: T;
+    context?: React.Context<T>;
     loggingEnabled?: boolean;
 };
 declare type ProviderState = Required<WithContextProps>;
@@ -12,36 +13,36 @@ export declare type WithContextProps<T = {}, OwnProps = {}> = T & OwnProps & {
 };
 export declare class ContextCreator extends React.Component<ContextProviderProps> {
     static instance: ContextCreator;
-    Context: React.Context<ContextProviderProps['value']>;
+    Context: React.Context<{}>;
     provider: Provider;
     constructor(props: ContextProviderProps);
     render(): JSX.Element;
 }
 interface ProviderProps {
     loggingEnabled?: boolean;
-    value: any;
+    initContextValue: {};
 }
 export declare class Provider extends React.Component<ProviderProps, ProviderState> {
     setContextProxy: (source: any, newContext: any) => void;
     getContext: (...getContextKeys: any[]) => any;
     log: (source: any, newContext: any, oldContext: any) => void;
-    constructor(props: any);
+    constructor(props: ProviderProps);
     render(): JSX.Element;
 }
-export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): <CP extends React.ComponentType<P & {
-    setContext: SetContext<{}>;
-    getContext: GetContext<{}>;
+export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): <CP extends React.ComponentType<P & C & {
+    setContext: SetContext<C>;
+    getContext: GetContext<C>;
 }>>(Component: CP) => {
     new (props: Readonly<P>): {
         render(): JSX.Element;
         renderConsumer: (context: any) => JSX.Element;
+        context: any;
         setState<K extends never>(state: {} | ((prevState: Readonly<{}>, props: Readonly<P>) => {} | Pick<{}, K> | null) | Pick<{}, K> | null, callback?: (() => void) | undefined): void;
         forceUpdate(callBack?: (() => void) | undefined): void;
         readonly props: Readonly<{
             children?: React.ReactNode;
         }> & Readonly<P>;
         state: Readonly<{}>;
-        context: any;
         refs: {
             [key: string]: React.ReactInstance;
         };
@@ -49,16 +50,17 @@ export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): <C
     new (props: P, context?: any): {
         render(): JSX.Element;
         renderConsumer: (context: any) => JSX.Element;
+        context: any;
         setState<K extends never>(state: {} | ((prevState: Readonly<{}>, props: Readonly<P>) => {} | Pick<{}, K> | null) | Pick<{}, K> | null, callback?: (() => void) | undefined): void;
         forceUpdate(callBack?: (() => void) | undefined): void;
         readonly props: Readonly<{
             children?: React.ReactNode;
         }> & Readonly<P>;
         state: Readonly<{}>;
-        context: any;
         refs: {
             [key: string]: React.ReactInstance;
         };
     };
+    contextType?: React.Context<any> | undefined;
 };
 export {};

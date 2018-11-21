@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-type ContextProviderProps<P = {}> = {
-    value: P;
+type ContextProviderProps<T = {}> = {
+    initContextValue: T;
+    context?: React.Context<T>
     loggingEnabled?: boolean;
 };
 
@@ -17,23 +18,27 @@ export type WithContextProps<T = {}, OwnProps = {}> = T & OwnProps & {
 
 export class ContextCreator extends React.Component<ContextProviderProps> {
     static instance: ContextCreator;
-
-    Context: React.Context<ContextProviderProps['value']>;
+    Context: React.Context<{}>;
     provider!: Provider;
 
     constructor(props: ContextProviderProps) {
         super(props);
-
-        this.Context = React.createContext({});
+        const { context, initContextValue } = this.props;
+        this.Context = context || React.createContext(initContextValue);
         ContextCreator.instance = this;
     }
 
     render() {
-        const { value, loggingEnabled, children } = this.props;
+        const {
+            loggingEnabled,
+            children,
+            initContextValue
+        } = this.props;
+
         return (
             <Provider
                 ref={(e: Provider) => this.provider = e}
-                value={value}
+                initContextValue={initContextValue}
                 loggingEnabled={loggingEnabled}
             >
                 {children}
@@ -44,7 +49,7 @@ export class ContextCreator extends React.Component<ContextProviderProps> {
 
 interface ProviderProps {
     loggingEnabled?: boolean;
-    value: any;
+    initContextValue: {};
 }
 
 export class Provider extends React.Component<ProviderProps, ProviderState> {
@@ -72,7 +77,7 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
                 gettedContext[currentKey] = (this.state as any)[currentKey];
                 return gettedContext;
             },
-            {} as any
+            {}
         );
     }
 
@@ -84,14 +89,14 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
         console.groupEnd();
     }
 
-    constructor(props: any) {
+    constructor(props: ProviderProps) {
         super(props);
 
-        const { value } = props;
+        const { initContextValue } = props;
         const { setContextProxy, getContext } = this;
 
         this.state = {
-            ...value,
+            ...initContextValue,
             setContext(context: any) {
                 setContextProxy(this, context);
             },
@@ -110,38 +115,20 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
     }
 }
 
-type InjectedWrapperComponentProps<P> = P & WithContextProps;
-type InjectedWrapperProps<P> = { Component: React.ComponentType<InjectedWrapperComponentProps<P>> };
+type InjectedWrapperProps<P> = { Component: React.ComponentType<WithContextProps<any, P>> };
 
 class InjectedWrapper<P> extends React.PureComponent<InjectedWrapperProps<P> & WithContextProps> {
     render() {
-        const { Component } = this.props;
+        const { Component, ...props } = this.props;
 
         return (
-            <Component {...this.getComponentProps()} />
+            <Component {...props as WithContextProps<any, P>} />
         );
-    }
-
-    /**
-     * Exclude Component from Wrapper's props.
-     */
-    getComponentProps = () => {
-        const props = {} as InjectedWrapperComponentProps<P>;
-        for (const key in this.props) {
-            if (!this.props.hasOwnProperty(key) || key === 'Component') {
-                continue;
-            }
-
-            const element = this.props[key];
-            props[key] = element;
-        }
-
-        return props;
     }
 }
 
 export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
-    return function <CP extends React.ComponentType<P & WithContextProps>>(Component: CP) {
+    return function <CP extends React.ComponentType<P & WithContextProps<C, P>>>(Component: CP) {
         const getContextToProps = (context: C & WithContextProps) => {
             const contextToProps: Partial<C & WithContextProps> = {};
 
