@@ -110,3 +110,20 @@ function withContext(...keys) {
     };
 }
 exports.withContext = withContext;
+class ContextRender extends React.PureComponent {
+    constructor() {
+        super(...arguments);
+        this.renderConsumer = (context) => {
+            const { children, keys } = this.props;
+            const contextToProps = keys.reduce((childContext, childContextKey) => {
+                return Object.assign({}, childContext, { [childContextKey]: context[childContextKey] });
+            }, {});
+            return children(contextToProps);
+        };
+    }
+    render() {
+        const { Context } = ContextCreator.instance;
+        return (React.createElement(Context.Consumer, null, this.renderConsumer));
+    }
+}
+exports.ContextRender = ContextRender;

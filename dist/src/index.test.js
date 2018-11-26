@@ -34,9 +34,11 @@ describe('TEST', () => {
         }
     }
     const Bar = index_1.withContext('bar')(BarComponent);
+    const contextRender = jest.fn(() => null);
     const AppRenderer = react_test_renderer_1.default.create(React.createElement(index_1.ContextCreator, { context: appContext, initContextValue: appContextValue },
         React.createElement(Foo, null),
-        React.createElement(Bar, null)));
+        React.createElement(Bar, null),
+        React.createElement(index_1.ContextRender, { keys: ['foo'] }, contextRender)));
     const AppRendererInstance = AppRenderer.getInstance();
     const ProviderTestInstance = AppRenderer.root.findByType(index_1.Provider);
     const providerElement = ProviderTestInstance.instance;
@@ -44,45 +46,47 @@ describe('TEST', () => {
         setContext: providerElement.state.setContext,
         getContext: providerElement.state.getContext
     };
-    describe('initial render', () => {
-        it('should render without errors', () => {
-            expect(AppRendererInstance).toBeTruthy();
-        });
-        it('should Foo and Bar rendered with initial context', () => {
-            const initialFooProps = Object.assign({ foo: appContextValue.foo }, providerDefaultProps);
-            expect(renderFoo).toBeCalledWith(initialFooProps);
-            const initialBarProps = Object.assign({ bar: appContextValue.bar }, providerDefaultProps);
-            expect(renderBar).toBeCalledWith(initialBarProps);
-        });
-        it('should get all initial context', () => {
-            const initialContext = providerDefaultProps.getContext('bar', 'foo');
-            expect(initialContext).toEqual(appContextValue);
+    it('should render without errors', () => {
+        expect(AppRendererInstance).toBeTruthy();
+    });
+    it('should Foo and Bar rendered with initial context', () => {
+        const initialFooProps = Object.assign({ foo: appContextValue.foo }, providerDefaultProps);
+        expect(renderFoo).toBeCalledWith(initialFooProps);
+        const initialBarProps = Object.assign({ bar: appContextValue.bar }, providerDefaultProps);
+        expect(renderBar).toBeCalledWith(initialBarProps);
+    });
+    it('should get all initial context', () => {
+        const initialContext = providerDefaultProps.getContext('bar', 'foo');
+        expect(initialContext).toEqual(appContextValue);
+    });
+    it('should ContextRender rendered with init context and setContext parms', () => {
+        expect(contextRender).toBeCalledWith({ foo: appContextValue.foo });
+    });
+    it('should "Foo" and "contextRender" re-render went foo value changed', () => {
+        jest.clearAllMocks();
+        providerElement.state.setContext({ foo: 2 });
+        const nextFooValue = 2;
+        const changedTextComponentProps = Object.assign({ foo: nextFooValue }, providerDefaultProps);
+        expect(renderFoo).toBeCalledWith(changedTextComponentProps);
+        expect(contextRender).toBeCalledWith({ foo: nextFooValue });
+    });
+    it('should "Bar" not re-render went "num" context changed', () => {
+        providerElement.state.setContext({ num: 2 });
+        expect(renderBar).not.toBeCalled();
+    });
+    it('should get all changed context', () => {
+        const initialContext = providerDefaultProps.getContext('foo');
+        expect(initialContext).toEqual({
+            foo: 2
         });
     });
-    describe('re-render', () => {
-        it('should Foo re-render went foo value changed', () => {
-            jest.clearAllMocks();
-            providerElement.state.setContext({ foo: 2 });
-            const changedTextComponentProps = Object.assign({ foo: 2 }, providerDefaultProps);
-            expect(renderFoo).toBeCalledWith(changedTextComponentProps);
-        });
-        it('should Bar not re-render went foo context changed', () => {
-            providerElement.state.setContext({ num: 2 });
-            expect(renderBar).not.toBeCalled();
-        });
-        it('should get all changed context', () => {
-            const initialContext = providerDefaultProps.getContext('foo');
-            expect(initialContext).toEqual({
-                foo: 2
-            });
-        });
-        it('should Foo re-render went props changed', () => {
-            jest.clearAllMocks();
-            AppRenderer.update(React.createElement(index_1.ContextCreator, { context: appContext, initContextValue: appContextValue },
-                React.createElement(Foo, { fooPrimayProps: "new-passed-props" }),
-                React.createElement(Bar, null)));
-            const changedTextComponentProps = Object.assign({ fooPrimayProps: 'new-passed-props', foo: 2 }, providerDefaultProps);
-            expect(renderFoo).toBeCalledWith(changedTextComponentProps);
-        });
+    it('should Foo re-render went it own props changed', () => {
+        jest.clearAllMocks();
+        const nextFooPrimayProps = 'new-passed-props';
+        AppRenderer.update(React.createElement(index_1.ContextCreator, { context: appContext, initContextValue: appContextValue },
+            React.createElement(Foo, { fooPrimayProps: nextFooPrimayProps }),
+            React.createElement(Bar, null)));
+        const changedTextComponentProps = Object.assign({ fooPrimayProps: nextFooPrimayProps, foo: 2 }, providerDefaultProps);
+        expect(renderFoo).toBeCalledWith(changedTextComponentProps);
     });
 });

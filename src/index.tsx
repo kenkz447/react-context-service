@@ -170,3 +170,34 @@ export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
         };
     };
 }
+
+export interface ContextRenderProps<C> {
+    keys: Array<keyof C>;
+    children: (context: C) => React.ReactNode | null;
+}
+
+export class ContextRender<C> extends React.PureComponent<ContextRenderProps<C>> {
+    render() {
+        const { Context } = ContextCreator.instance;
+        return (
+            <Context.Consumer>
+                {this.renderConsumer}
+            </Context.Consumer>
+        );
+    }
+
+    renderConsumer = (context) => {
+        const { children, keys } = this.props;
+        const contextToProps = keys.reduce(
+            (childContext, childContextKey) => {
+                return {
+                    ...childContext,
+                    [childContextKey]: context[childContextKey]
+                };
+            },
+            {}
+        ) as C;
+
+        return children(contextToProps);
+    }
+}

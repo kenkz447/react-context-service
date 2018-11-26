@@ -75,18 +75,64 @@ function BarComponent(props) {
 
 export const Bar = withContext('bar')(BarComponent);
 ```
+### ContextRender
+
+```jsx
+import { ContextRender } from 'react-context-service';
+
+function contextRender() {
+    return (
+        <ContextRender keys={['foo']}>
+            {({ foo }) => <span>{foo}</span>}
+        </ContextRender>
+    )
+} 
+```
 
 ### Decorator style
 
-My favorite:
-
 ```jsx
+import { withContext } from 'react-context-service';
+
 @withContext('foo')
 export class Foo extends React.Component {
     render() {
         const { foo, setContext, getContext } = this.props;
         
         return null;
+    }
+}
+```
+
+## Using context instance
+
+Mixing with offical React context way:
+
+```tsx
+import { ContextCreator } from 'react-context-service';
+
+const appContext = {
+    foo: 1,
+    bar: 2
+};
+
+const context = React.createContext(appContext)
+
+function App () {
+    return (
+        <ContextCreator context={context} value={appContext}>
+            <Child />
+        </ContextCreator>
+    )
+}
+
+class Child extends React.Component {
+    contextType: context;
+    render() {
+        const { foo, bar } = this.context
+        return (
+            <span>{foo + bar}</span>
+        )
     }
 }
 ```
@@ -129,9 +175,7 @@ interface ChildComponentOwnProps {
  * Completed suggestions with:
  * name, bar, setContext and getContext.
  */
-type ChildComponentProps = WithAppContextProps &
-    Pick<AppContext, 'bar'> &
-    ChildComponentOwnProps;
+type ChildComponentProps = WithContextProps<Pick<AppContext, 'bar'>, ChildComponentOwnProps>;
 
 function ChildComponent(props: ChildComponentProps) {
     const { bar, getContext, setContext } = props;
@@ -142,7 +186,7 @@ function ChildComponent(props: ChildComponentProps) {
  * AppContext is help you see context key list when typing;
  * ChildComponentOwnProps is accepted props passed from parents
  */
-export default withContext<AppContext, ChildComponentOwnProps>('bar')(ChildComponent)
+export default withContext<ChildComponentProps, ChildComponentOwnProps>('bar')(ChildComponent)
 ```
 
 and Parent:
@@ -153,4 +197,4 @@ import ChildComponent from './ChildComponent'
 <ChildComponent name="any"/>
 ```
 
-That all =))
+That all!

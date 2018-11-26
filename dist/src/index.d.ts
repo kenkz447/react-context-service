@@ -63,4 +63,12 @@ export declare function withContext<C = {}, P = {}>(...keys: Array<keyof C>): <C
     };
     contextType?: React.Context<any> | undefined;
 };
+export interface ContextRenderProps<C> {
+    keys: Array<keyof C>;
+    children: (context: C) => React.ReactNode | null;
+}
+export declare class ContextRender<C> extends React.PureComponent<ContextRenderProps<C>> {
+    render(): JSX.Element;
+    renderConsumer: (context: any) => React.ReactNode;
+}
 export {};
