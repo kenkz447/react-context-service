@@ -173,7 +173,7 @@ export function withContext<C = {}, P = {}>(...keys: Array<keyof C>) {
 
 export interface ContextRenderProps<C> {
     keys: Array<keyof C>;
-    children: (context: C) => React.ReactNode | null;
+    children: (x: WithContextProps<C>) => React.ReactNode;
 }
 
 export class ContextRender<C> extends React.PureComponent<ContextRenderProps<C>> {
@@ -195,8 +195,11 @@ export class ContextRender<C> extends React.PureComponent<ContextRenderProps<C>>
                     [childContextKey]: context[childContextKey]
                 };
             },
-            {}
-        ) as C;
+            {
+                setContext: context.setContext,
+                getContext: context.getContext
+            }
+        ) as WithContextProps<C>;
 
         return children(contextToProps);
     }

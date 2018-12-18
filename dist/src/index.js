@@ -117,7 +117,10 @@ class ContextRender extends React.PureComponent {
             const { children, keys } = this.props;
             const contextToProps = keys.reduce((childContext, childContextKey) => {
                 return Object.assign({}, childContext, { [childContextKey]: context[childContextKey] });
-            }, {});
+            }, {
+                setContext: context.setContext,
+                getContext: context.getContext
+            });
             return children(contextToProps);
         };
     }

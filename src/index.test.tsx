@@ -55,7 +55,7 @@ describe('TEST', () => {
             <Foo />
             <Bar />
             <ContextRender<AppContext> keys={['foo']}>
-                {contextRender}
+                {(props) => contextRender(props)}
             </ContextRender>
         </ContextCreator>
     );
@@ -94,7 +94,10 @@ describe('TEST', () => {
     });
 
     it('should ContextRender rendered with init context and setContext parms', () => {
-        expect(contextRender).toBeCalledWith({ foo: appContextValue.foo });
+        expect(contextRender).toBeCalledWith({
+            foo: appContextValue.foo,
+            ...providerDefaultProps
+        });
     });
 
     it('should "Foo" and "contextRender" re-render went foo value changed', () => {
@@ -110,7 +113,7 @@ describe('TEST', () => {
         };
 
         expect(renderFoo).toBeCalledWith(changedTextComponentProps);
-        expect(contextRender).toBeCalledWith({ foo: nextFooValue });
+        expect(contextRender).toBeCalledWith(changedTextComponentProps);
     });
 
     it('should "Bar" not re-render went "num" context changed', () => {

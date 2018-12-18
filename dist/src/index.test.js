@@ -38,7 +38,7 @@ describe('TEST', () => {
     const AppRenderer = react_test_renderer_1.default.create(React.createElement(index_1.ContextCreator, { context: appContext, initContextValue: appContextValue },
         React.createElement(Foo, null),
         React.createElement(Bar, null),
-        React.createElement(index_1.ContextRender, { keys: ['foo'] }, contextRender)));
+        React.createElement(index_1.ContextRender, { keys: ['foo'] }, (props) => contextRender(props))));
     const AppRendererInstance = AppRenderer.getInstance();
     const ProviderTestInstance = AppRenderer.root.findByType(index_1.Provider);
     const providerElement = ProviderTestInstance.instance;
@@ -60,7 +60,7 @@ describe('TEST', () => {
         expect(initialContext).toEqual(appContextValue);
     });
     it('should ContextRender rendered with init context and setContext parms', () => {
-        expect(contextRender).toBeCalledWith({ foo: appContextValue.foo });
+        expect(contextRender).toBeCalledWith(Object.assign({ foo: appContextValue.foo }, providerDefaultProps));
     });
     it('should "Foo" and "contextRender" re-render went foo value changed', () => {
         jest.clearAllMocks();
@@ -68,7 +68,7 @@ describe('TEST', () => {
         const nextFooValue = 2;
         const changedTextComponentProps = Object.assign({ foo: nextFooValue }, providerDefaultProps);
         expect(renderFoo).toBeCalledWith(changedTextComponentProps);
-        expect(contextRender).toBeCalledWith({ foo: nextFooValue });
+        expect(contextRender).toBeCalledWith(changedTextComponentProps);
     });
     it('should "Bar" not re-render went "num" context changed', () => {
         providerElement.state.setContext({ num: 2 });
