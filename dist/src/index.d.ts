@@ -24,7 +24,7 @@ interface ProviderProps {
 }
 export declare class Provider extends React.Component<ProviderProps, ProviderState> {
     setContextProxy: (source: any, newContext: any) => void;
-    getContext: (...getContextKeys: any[]) => any;
+    getContext: (...contextKeys: any[]) => any;
     log: (source: any, newContext: any, oldContext: any) => void;
     constructor(props: ProviderProps);
     render(): JSX.Element;

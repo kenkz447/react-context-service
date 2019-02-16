@@ -44,11 +44,11 @@ class Provider extends React.Component {
             });
             this.setState(newContext, setContextCallback);
         };
-        this.getContext = (...getContextKeys) => {
-            if (!getContextKeys) {
+        this.getContext = (...contextKeys) => {
+            if (!contextKeys || !contextKeys.length) {
                 return Object.seal(this.state);
             }
-            return getContextKeys.reduce((gettedContext, currentKey) => {
+            return contextKeys.reduce((gettedContext, currentKey) => {
                 gettedContext[currentKey] = this.state[currentKey];
                 return gettedContext;
             }, {});

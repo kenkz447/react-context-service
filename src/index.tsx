@@ -67,12 +67,12 @@ export class Provider extends React.Component<ProviderProps, ProviderState> {
         this.setState(newContext, setContextCallback);
     }
 
-    getContext = (...getContextKeys) => {
-        if (!getContextKeys) {
+    getContext = (...contextKeys) => {
+        if (!contextKeys || !contextKeys.length) {
             return Object.seal(this.state);
         }
 
-        return getContextKeys.reduce(
+        return contextKeys.reduce(
             (gettedContext, currentKey) => {
                 gettedContext[currentKey] = (this.state as any)[currentKey];
                 return gettedContext;
